@@ -66,24 +66,6 @@ export async function buildProjectZip(
   const luaPath = 'SCRIPTS/TELEMETRY/studio.lua'
   zip.file(luaPath, lua)
   files.push({ name: luaPath, blob: new Blob([lua], { type: 'text/plain' }) })
-  zip.file(
-    'project.json',
-    JSON.stringify(
-      {
-        format: 'edgetx-studio-project',
-        version: 1,
-        device: { id: device.id, name: device.name, width: device.width, height: device.height },
-        frameCount: frames.length,
-        frameNames: frames.map(({ name }) => name),
-        effects: effects.map(({ type, enabled, settings }) => ({ type, enabled, settings })),
-        hardwareNote:
-          'The Lua telemetry script draws split monochrome BMP files from the SD card with lcd.drawPixmap, so animation pixels are not embedded in Lua memory. Enabled effects are generated only when present. Install the archive contents on the SD card and assign /SCRIPTS/TELEMETRY/studio.lua; verify on your firmware.',
-      },
-      null,
-      2,
-    ),
-  )
-
   const blob = await zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',
