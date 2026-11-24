@@ -15,6 +15,7 @@ export interface FrameSummary {
 
 const props = defineProps<{
   frames: FrameSummary[]
+  invert: boolean
   selectedId: string | null
   speed: number
   loop: boolean
@@ -30,6 +31,7 @@ const emit = defineEmits<{
   reorder: [from: number, to: number]
   duration: [id: string, value: number]
   'update:speed': [value: number]
+  'update:invert': [value: boolean]
   'update:loop': [value: boolean]
   'update:overlayOnImage': [value: boolean]
   togglePlayback: []
@@ -104,7 +106,7 @@ function reorder(to: number) {
         type="file"
         multiple
         :disabled="busy"
-        accept=".png,.jpg,.jpeg,.bmp,.webp,image/*"
+        accept=".png,.jpg,.jpeg,.bmp,.webp,.gif,image/*"
         @change="accept(($event.target as HTMLInputElement).files)"
       />
     </div>
@@ -121,7 +123,7 @@ function reorder(to: number) {
       @dragleave.prevent="isDragging = false"
       @drop.prevent="drop"
     >
-      <Film :size="15" />Drop multiple images here to add frames
+      <Film :size="15" />Drop images or animated GIFs here to add frames
     </div>
     <div
       v-if="frames.length"
@@ -196,6 +198,21 @@ function reorder(to: number) {
 
     <div class="mb-3 mt-6 text-[9px] font-semibold tracking-[0.14em] text-zinc-500">PLAYBACK</div>
     <div class="space-y-3">
+      <div
+        class="flex items-center justify-between gap-3 rounded-lg border border-white/[0.06] px-3 py-2"
+      >
+        <span>
+          <strong class="block text-[11px] font-medium text-zinc-300">Invert colors</strong>
+          <small class="mt-1 block text-[10px] text-zinc-500"
+            >Swap black and white on frames and the image</small
+          >
+        </span>
+        <UiSwitch
+          :model-value="invert"
+          label="Invert image and animation colors"
+          @update:model-value="emit('update:invert', $event)"
+        />
+      </div>
       <label class="block">
         <span class="mb-1 flex justify-between text-[11px] text-zinc-400"
           >Playback speed

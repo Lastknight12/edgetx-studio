@@ -23,11 +23,15 @@ export const fallingSnowLua: LuaEffectGenerator = {
     else
       drawLine(math.floor(x - ${size}), math.floor(y), math.floor(x + ${size}), math.floor(y), SOLID, 0)
       drawLine(math.floor(x), math.floor(y - ${size}), math.floor(x), math.floor(y + ${size}), SOLID, 0)
-${size >= 3 ? `      drawLine(math.floor(x - 1), math.floor(y - 1), math.floor(x - 2), math.floor(y - 2), SOLID, 0)
+${
+  size >= 3
+    ? `      drawLine(math.floor(x - 1), math.floor(y - 1), math.floor(x - 2), math.floor(y - 2), SOLID, 0)
       drawLine(math.floor(x + 1), math.floor(y - 1), math.floor(x + 2), math.floor(y - 2), SOLID, 0)
       drawLine(math.floor(x - 1), math.floor(y + 1), math.floor(x - 2), math.floor(y + 2), SOLID, 0)
       drawLine(math.floor(x + 1), math.floor(y + 1), math.floor(x + 2), math.floor(y + 2), SOLID, 0)
-` : ''}    end
+`
+    : ''
+}    end
   end
 end
 `

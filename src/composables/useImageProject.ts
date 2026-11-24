@@ -3,11 +3,13 @@ import type { DeviceProfile, AnimationFrame, ImageSettings } from '@/types/studi
 import {
   defaultImageSettings,
   processImage,
+  type ImageRasterSource,
   type ProcessedImage,
 } from '@/modules/image/imageProcessing'
+import { importGifFrames, isGifFile } from '@/modules/image/gifImport'
 
 export interface StudioFrame extends AnimationFrame {
-  source: HTMLImageElement
+  source: ImageRasterSource
   processed: ProcessedImage
 }
 
@@ -25,7 +27,8 @@ export interface UploadProgress {
 
 function isSupportedImage(file: File): boolean {
   return (
-    /^(image\/(png|jpeg|bmp|webp))$/i.test(file.type) || /\.(png|jpe?g|bmp|webp)$/i.test(file.name)
+    /^(image\/(png|jpeg|bmp|webp|gif))$/i.test(file.type) ||
+    /\.(png|jpe?g|bmp|webp|gif)$/i.test(file.name)
   )
 }
 
@@ -55,29 +58,50 @@ export function useImageProject(device: Ref<DeviceProfile>) {
   const uploadProgress = shallowRef<UploadProgress | null>(null)
   const error = ref('')
 
-  function reprocess() {
+  let reprocessRevision = 0
+
+  async function reprocess() {
+    const revision = ++reprocessRevision
+    const profile = device.value
+    const settings = { ...imageSettings.value }
+    const sourceFrames = frames.value.slice()
     try {
-      processedStatic.value = staticSource.value
-        ? processImage(staticSource.value.image, device.value, imageSettings.value)
+      const staticResult = staticSource.value
+        ? processImage(staticSource.value.image, profile, settings)
         : null
-      frames.value = frames.value.map((frame) => ({
-        ...frame,
-        processed: processImage(frame.source, device.value, imageSettings.value),
-      }))
+      if (revision !== reprocessRevision) return
+      processedStatic.value = staticResult
+
+      const processedFrames = new Map<string, ProcessedImage>()
+      for (let index = 0; index < sourceFrames.length; index++) {
+        if (revision !== reprocessRevision) return
+        const frame = sourceFrames[index]!
+        processedFrames.set(frame.id, processImage(frame.source, profile, settings))
+        if (index % 2 === 1) await yieldToBrowser()
+      }
+
+      if (revision !== reprocessRevision) return
+      frames.value = frames.value.map((frame) => {
+        const processed = processedFrames.get(frame.id)
+        return processed ? { ...frame, processed } : frame
+      })
       error.value = ''
     } catch (reason) {
+      if (revision !== reprocessRevision) return
       error.value = reason instanceof Error ? reason.message : 'Image processing failed'
     }
   }
 
-  watch(device, reprocess, { flush: 'sync' })
+  watch(device, () => void reprocess(), { flush: 'sync' })
 
   async function uploadStatic(files: FileList | File[]) {
     if (isProcessing.value) return
     error.value = ''
-    const file = Array.from(files).find(isSupportedImage)
+    const file = Array.from(files).find(
+      (candidate) => isSupportedImage(candidate) && !isGifFile(candidate),
+    )
     if (!file) {
-      error.value = 'Unsupported file type. Choose a PNG, JPG, BMP or WebP image.'
+      error.value = 'Choose a PNG, JPG, BMP or WebP image. Import GIFs from the Animation tab.'
       return
     }
 
@@ -118,7 +142,7 @@ export function useImageProject(device: Ref<DeviceProfile>) {
     const selected = Array.from(files)
     const accepted = selected.filter(isSupportedImage)
     if (!accepted.length) {
-      error.value = 'Unsupported file type. Choose PNG, JPG, BMP or WebP images.'
+      error.value = 'Unsupported file type. Choose PNG, JPG, BMP, WebP or GIF images.'
       return
     }
 
@@ -134,44 +158,71 @@ export function useImageProject(device: Ref<DeviceProfile>) {
       let pending: StudioFrame[] = []
       let failedCount = 0
       let addedCount = 0
+      let failureMessage = ''
+
+      const commitPending = () => {
+        if (!pending.length) return
+        frames.value = [...frames.value, ...pending]
+        for (const frame of pending) committedUrls.add(frame.url)
+        pending = []
+      }
 
       for (let index = 0; index < accepted.length; index++) {
         const file = accepted[index]!
-        let loadedUrl: string | null = null
         try {
-          const source = await loadImage(file)
-          loadedUrl = source.url
-          ownedUrls.add(source.url)
-          pending.push({
-            id: crypto.randomUUID(),
-            file: source.file,
-            url: source.url,
-            source: source.image,
-            duration: 120,
-            processed: processImage(source.image, device.value, imageSettings.value),
-          })
-          addedCount++
-        } catch {
+          if (isGifFile(file)) {
+            await importGifFrames(
+              file,
+              device.value,
+              imageSettings.value,
+              (gifFrame) => {
+                ownedUrls.add(gifFrame.thumbnailUrl)
+                pending.push({
+                  id: crypto.randomUUID(),
+                  file,
+                  url: gifFrame.thumbnailUrl,
+                  source: gifFrame.source,
+                  duration: gifFrame.duration,
+                  processed: gifFrame.processed,
+                })
+                addedCount++
+                if (pending.length >= 6) commitPending()
+              },
+              (completed, total) => {
+                uploadProgress.value = {
+                  completed,
+                  total,
+                  message: `Decoding GIF: ${file.name}`,
+                }
+              },
+            )
+          } else {
+            const source = await loadImage(file)
+            ownedUrls.add(source.url)
+            pending.push({
+              id: crypto.randomUUID(),
+              file: source.file,
+              url: source.url,
+              source: source.image,
+              duration: 120,
+              processed: processImage(source.image, device.value, imageSettings.value),
+            })
+            addedCount++
+          }
+        } catch (reason) {
           failedCount++
-          if (loadedUrl) {
-            URL.revokeObjectURL(loadedUrl)
-            ownedUrls.delete(loadedUrl)
+          failureMessage = reason instanceof Error ? reason.message : 'Unable to process an image'
+        }
+
+        if (!isGifFile(file)) {
+          uploadProgress.value = {
+            completed: selected.length - accepted.length + index + 1,
+            total: selected.length,
+            message: 'Loading and processing frames',
           }
         }
 
-        uploadProgress.value = {
-          completed: selected.length - accepted.length + index + 1,
-          total: selected.length,
-          message: 'Loading and processing frames',
-        }
-
-        if (pending.length >= 6 || index === accepted.length - 1) {
-          if (pending.length) {
-            frames.value = [...frames.value, ...pending]
-            for (const frame of pending) committedUrls.add(frame.url)
-            pending = []
-          }
-        }
+        if (pending.length >= 6 || index === accepted.length - 1) commitPending()
         await yieldToBrowser()
       }
 
@@ -179,9 +230,15 @@ export function useImageProject(device: Ref<DeviceProfile>) {
         throw new Error('Unable to load any of the selected animation frames')
       }
 
+      for (const url of ownedUrls) {
+        if (!committedUrls.has(url)) URL.revokeObjectURL(url)
+      }
+
       const skippedCount = selected.length - accepted.length + failedCount
       if (skippedCount) {
-        error.value = `${skippedCount} unsupported or unreadable file${skippedCount === 1 ? '' : 's'} skipped.`
+        error.value = failureMessage
+          ? `${skippedCount} file${skippedCount === 1 ? '' : 's'} skipped. ${failureMessage}`
+          : `${skippedCount} unsupported or unreadable file${skippedCount === 1 ? '' : 's'} skipped.`
       }
     } catch (reason) {
       for (const url of ownedUrls) {
@@ -196,7 +253,7 @@ export function useImageProject(device: Ref<DeviceProfile>) {
 
   function updateSettings(patch: Partial<ImageSettings>) {
     imageSettings.value = { ...imageSettings.value, ...patch }
-    reprocess()
+    void reprocess()
   }
 
   onBeforeUnmount(() => {

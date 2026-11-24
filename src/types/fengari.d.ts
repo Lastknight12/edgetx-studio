@@ -8,7 +8,12 @@ declare module 'fengari' {
     lua_createtable(state: LuaState, arraySize: number, recordSize: number): void
     lua_gettop(state: LuaState): number
     lua_pop(state: LuaState, count: number): void
-    lua_pcall(state: LuaState, argumentCount: number, resultCount: number, errorFunction: number): number
+    lua_pcall(
+      state: LuaState,
+      argumentCount: number,
+      resultCount: number,
+      errorFunction: number,
+    ): number
     lua_pushjsfunction(state: LuaState, callback: LuaFunction): void
     lua_pushnumber(state: LuaState, value: number): void
     lua_pushvalue(state: LuaState, index: number): void
@@ -34,13 +39,29 @@ declare module 'fengari' {
 declare module 'fengari/src/lua.js' {
   export const LUA_OK: number
   export function lua_close(state: import('fengari').LuaState): void
-  export function lua_createtable(state: import('fengari').LuaState, arraySize: number, recordSize: number): void
+  export function lua_createtable(
+    state: import('fengari').LuaState,
+    arraySize: number,
+    recordSize: number,
+  ): void
   export function lua_pop(state: import('fengari').LuaState, count: number): void
-  export function lua_pcall(state: import('fengari').LuaState, argumentCount: number, resultCount: number, errorFunction: number): number
-  export function lua_pushjsfunction(state: import('fengari').LuaState, callback: import('fengari').LuaFunction): void
+  export function lua_pcall(
+    state: import('fengari').LuaState,
+    argumentCount: number,
+    resultCount: number,
+    errorFunction: number,
+  ): number
+  export function lua_pushjsfunction(
+    state: import('fengari').LuaState,
+    callback: import('fengari').LuaFunction,
+  ): void
   export function lua_pushnumber(state: import('fengari').LuaState, value: number): void
   export function lua_pushvalue(state: import('fengari').LuaState, index: number): void
-  export function lua_setfield(state: import('fengari').LuaState, index: number, key: Uint8Array): void
+  export function lua_setfield(
+    state: import('fengari').LuaState,
+    index: number,
+    key: Uint8Array,
+  ): void
   export function lua_setglobal(state: import('fengari').LuaState, name: Uint8Array): void
   export function lua_tointeger(state: import('fengari').LuaState, index: number): number | false
   export function lua_tolstring(state: import('fengari').LuaState, index: number): Uint8Array | null

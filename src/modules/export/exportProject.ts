@@ -19,6 +19,10 @@ export interface ExportResult {
   warnings: string[]
 }
 
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()))
+}
+
 export async function buildProjectZip(
   frames: ExportFrame[],
   device: DeviceProfile,
@@ -55,6 +59,7 @@ export async function buildProjectZip(
       { name: `IMAGES/${leftName}`, blob: leftBlob },
       { name: `IMAGES/${rightName}`, blob: rightBlob },
     )
+    if (index % 4 === 3) await yieldToBrowser()
   }
 
   const lua = generateLua(frames, device, loop, effects)

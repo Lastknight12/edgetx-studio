@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { renderComposite } from '@/modules/effects/compositing'
 import { defaultDevice, deviceProfiles, getDeviceProfile } from '@/modules/devices/deviceRegistry'
 import { splitPixels } from '@/modules/image/imageProcessing'
+import { isGifFile } from '@/modules/image/gifImport'
 import type { DeviceProfile, ImageSettings } from '@/types/studio'
 import type { ExportFrame } from '@/modules/export/exportProject'
 import { useAnimationTimeline } from './useAnimationTimeline'
@@ -110,7 +111,29 @@ export function useStudioProject() {
       const base = frame
         ? composeAnimationFrame(frame, overlayPreviewCanvas)
         : (imageProject.processedStatic.value?.canvas ?? null)
-      renderComposite(base, layers.effects.value, device.value, time, previewImage.value)
+
+      if (layers.enabledCount.value === 0) {
+        if (base) {
+          previewImage.value = base
+        } else {
+          const blank = previewImage.value
+          if (blank.width !== device.value.width || blank.height !== device.value.height) {
+            previewImage.value = createBlankCanvas(device.value)
+          } else {
+            const context = blank.getContext('2d')
+            if (!context) throw new Error('Canvas 2D context is unavailable')
+            context.fillStyle = '#fff'
+            context.fillRect(0, 0, blank.width, blank.height)
+          }
+        }
+        previewVersion.value += 1
+        return
+      }
+
+      const output =
+        previewImage.value === base ? createBlankCanvas(device.value) : previewImage.value
+      renderComposite(base, layers.effects.value, device.value, time, output)
+      previewImage.value = output
       previewVersion.value += 1
     } catch (reason) {
       imageProject.error.value =
@@ -174,6 +197,11 @@ export function useStudioProject() {
   }
 
   async function uploadStatic(files: FileList | File[]) {
+    const gif = Array.from(files).find(isGifFile)
+    if (gif) {
+      await uploadFrames([gif])
+      return
+    }
     const previousUrl = imageProject.staticSource.value?.url
     await imageProject.uploadStatic(files)
     if (imageProject.staticSource.value?.url !== previousUrl) projectExport.invalidate()
@@ -185,8 +213,9 @@ export function useStudioProject() {
   }
 
   async function uploadFrames(files: FileList | File[]) {
+    const selected = Array.from(files)
     const previousCount = imageProject.frames.value.length
-    await imageProject.uploadFrames(files)
+    await imageProject.uploadFrames(selected)
     if (imageProject.frames.value.length > previousCount) {
       timeline.selectFrame(imageProject.frames.value[previousCount]!.id)
       timeline.startPlayback()
@@ -272,33 +301,28 @@ export function useStudioProject() {
   async function generateExport() {
     projectExport.isExporting.value = true
     try {
-      let exportTime = 0
       let exportFrames: ExportFrame[]
       const animationFrames = imageProject.frames.value
       if (animationFrames.length) {
-        exportFrames = animationFrames.map((frame) => {
-          const time = exportTime
+        exportFrames = []
+        for (let index = 0; index < animationFrames.length; index++) {
+          const frame = animationFrames[index]!
           const duration = frame.duration / timeline.playbackSpeed.value
-          exportTime += duration / 1000
           const luaCanvas = composeAnimationFrame(frame)
-          return {
-            canvas: renderComposite(luaCanvas, layers.effects.value, device.value, time),
+          exportFrames.push({
+            canvas: luaCanvas,
             luaCanvas,
             duration,
             name: frame.file.name,
-          }
-        })
+          })
+          if (index % 4 === 3) await yieldToBrowser()
+        }
       } else {
         const luaCanvas =
           imageProject.processedStatic.value?.canvas ?? createBlankCanvas(device.value)
         exportFrames = [
           {
-            canvas: renderComposite(
-              luaCanvas,
-              layers.effects.value,
-              device.value,
-              performance.now() / 1000,
-            ),
+            canvas: luaCanvas,
             luaCanvas,
             duration: 120,
             name: imageProject.staticSource.value?.file.name ?? 'blank',
@@ -377,6 +401,10 @@ export function useStudioProject() {
     setActiveTab,
     generateExport,
   }
+}
+
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()))
 }
 
 export type StudioProject = ReturnType<typeof useStudioProject>

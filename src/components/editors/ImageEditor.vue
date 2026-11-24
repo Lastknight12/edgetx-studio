@@ -50,7 +50,7 @@ function accept(files: FileList | File[] | null) {
         class="hidden"
         type="file"
         :disabled="!canUpload"
-        accept=".png,.jpg,.jpeg,.bmp,.webp,image/png,image/jpeg,image/bmp,image/webp"
+        accept=".png,.jpg,.jpeg,.bmp,.webp,.gif,image/png,image/jpeg,image/bmp,image/webp,image/gif"
         @change="accept(($event.target as HTMLInputElement).files)"
       />
       <span
@@ -62,9 +62,7 @@ function accept(files: FileList | File[] | null) {
         <p class="truncate text-xs font-medium text-zinc-200">Drop an image to get started</p>
         <p class="mt-1 text-[10px] text-zinc-500">PNG, JPG, BMP or WebP</p>
       </div>
-      <UiButton size="small" :disabled="!canUpload" @click.stop="input?.click()">
-        Browse
-      </UiButton>
+      <UiButton size="small" :disabled="!canUpload" @click.stop="input?.click()"> Browse </UiButton>
     </div>
 
     <div class="mt-5 grid grid-cols-2 gap-3">
@@ -203,6 +201,19 @@ function accept(files: FileList | File[] | null) {
           :model-value="settings.dither"
           label="Floyd–Steinberg dithering"
           @update:model-value="emit('update:settings', { dither: $event })"
+        />
+      </div>
+      <div class="flex items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
+        <span>
+          <strong class="block text-[11px] font-medium text-zinc-300">Invert colors</strong>
+          <small class="mt-1 block text-[10px] text-zinc-500"
+            >Swap black and white on the image and animation</small
+          >
+        </span>
+        <UiSwitch
+          :model-value="settings.invert"
+          label="Invert image and animation colors"
+          @update:model-value="emit('update:settings', { invert: $event })"
         />
       </div>
     </div>

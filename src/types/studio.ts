@@ -16,6 +16,7 @@ export interface ImageSettings {
   cropX: number
   cropY: number
   dither: boolean
+  invert: boolean
 }
 
 export interface AnimationFrame {

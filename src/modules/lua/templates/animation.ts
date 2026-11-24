@@ -8,11 +8,13 @@ export function animationLuaTemplate(
   effectCalls: string,
 ): string {
   const rightX = Math.floor(device.width / 2)
+  let cumulativeDuration = 0
   const frameData = frames
     .map(({ duration }, index) => {
       const safeDuration = Math.max(1, Math.round(duration))
+      cumulativeDuration += safeDuration
       const number = String(index + 1).padStart(3, '0')
-      return `  { framesFolder .. "/${number}_left.bmp", framesFolder .. "/${number}_right.bmp", ${safeDuration} }`
+      return `  { framesFolder .. "/${number}_left.bmp", framesFolder .. "/${number}_right.bmp", ${safeDuration}, ${cumulativeDuration} }`
     })
     .join(',\n')
   return `-- EdgeTX Studio generated --
@@ -25,19 +27,22 @@ local startedAt = getTime()
 
 local function run(event)
   local elapsed = (getTime() - startedAt) * 10
-  local total = 0
-  for index = 1, #frames do total = total + frames[index][3] end
+  local total = frames[#frames][4]
   if loopAnimation and total > 0 then
     elapsed = elapsed % total
   elseif elapsed >= total then
     elapsed = math.max(0, total - 1)
   end
-  local frameIndex = 1
-  while frameIndex < #frames and elapsed >= frames[frameIndex][3] do
-    elapsed = elapsed - frames[frameIndex][3]
-    frameIndex = frameIndex + 1
+  local low, high = 1, #frames
+  while low < high do
+    local middle = math.floor((low + high) / 2)
+    if elapsed < frames[middle][4] then
+      high = middle
+    else
+      low = middle + 1
+    end
   end
-  local frame = frames[frameIndex]
+  local frame = frames[low]
   lcd.clear()
   lcd.drawPixmap(0, 0, frame[1])
   lcd.drawPixmap(${rightX}, 0, frame[2])

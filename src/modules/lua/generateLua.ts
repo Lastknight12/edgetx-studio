@@ -41,10 +41,10 @@ function generateLuaEffectParts(effects: EffectInstance[], device: DeviceProfile
     .sort((left, right) => left.order - right.order)
   const effectFunctions = enabledEffects.length
     ? `${clippedLineFunction(device)}\n${enabledEffects
-    .map((effect, index) =>
-      getLuaEffectGenerator(effect.type).generate(effect, device, `drawEffect${index + 1}`),
-    )
-    .join('\n')}`
+        .map((effect, index) =>
+          getLuaEffectGenerator(effect.type).generate(effect, device, `drawEffect${index + 1}`),
+        )
+        .join('\n')}`
     : ''
   const effectCalls = enabledEffects.map((_, index) => `  drawEffect${index + 1}(time)`).join('\n')
   return { effectFunctions, effectCalls }

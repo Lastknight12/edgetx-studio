@@ -1,4 +1,5 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
+import { isGifFile } from '@/modules/image/gifImport'
 
 export function useGlobalImageDrop(
   activeTab: Ref<string>,
@@ -41,7 +42,7 @@ export function useGlobalImageDrop(
 
     const files = event.dataTransfer?.files
     if (!files?.length) return
-    if (files.length > 1 || activeTab.value === 'animation') {
+    if (files.length > 1 || activeTab.value === 'animation' || isGifFile(files[0]!)) {
       void uploadFrames(files)
     } else {
       void uploadImage(files)

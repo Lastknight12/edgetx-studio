@@ -95,6 +95,7 @@ function updateTab(value: string | number) {
 
       <TabsContent value="image" class="min-h-0 flex-1 data-[state=inactive]:hidden">
         <ImageEditor
+          v-if="activeTab === 'image'"
           :settings="imageSettings"
           :original-url="originalUrl"
           :has-static-image="hasStaticImage"
@@ -110,6 +111,7 @@ function updateTab(value: string | number) {
       <TabsContent value="animation" class="min-h-0 flex-1 data-[state=inactive]:hidden">
         <AnimationEditor
           :frames="frames"
+          :invert="imageSettings.invert"
           :selected-id="selectedFrameId"
           :speed="playbackSpeed"
           :loop="loopAnimation"
@@ -117,6 +119,7 @@ function updateTab(value: string | number) {
           :playing="isPlaying"
           :busy="isProcessing"
           @upload="project.uploadFrames"
+          @update:invert="project.updateImageSettings({ invert: $event })"
           @select="project.selectFrame"
           @remove="project.removeFrame"
           @remove-all="project.removeAllFrames"

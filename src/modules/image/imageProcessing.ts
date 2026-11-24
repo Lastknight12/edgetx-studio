@@ -5,6 +5,8 @@ export interface ProcessedImage {
   pixels: Uint8Array
 }
 
+export type ImageRasterSource = HTMLImageElement | HTMLCanvasElement
+
 export const defaultImageSettings: ImageSettings = {
   brightness: 0,
   contrast: 0,
@@ -13,10 +15,11 @@ export const defaultImageSettings: ImageSettings = {
   cropX: 0,
   cropY: 0,
   dither: false,
+  invert: false,
 }
 
 export function processImage(
-  source: HTMLImageElement,
+  source: ImageRasterSource,
   device: DeviceProfile,
   settings: ImageSettings,
 ): ProcessedImage {
@@ -26,8 +29,8 @@ export function processImage(
   const context = canvas.getContext('2d', { willReadFrequently: true })
   if (!context) throw new Error('Canvas 2D context is unavailable')
 
-  const sourceWidth = source.naturalWidth
-  const sourceHeight = source.naturalHeight
+  const sourceWidth = source instanceof HTMLImageElement ? source.naturalWidth : source.width
+  const sourceHeight = source instanceof HTMLImageElement ? source.naturalHeight : source.height
   if (!sourceWidth || !sourceHeight) throw new Error('The selected image has no dimensions')
 
   const scale = Math.max(device.width / sourceWidth, device.height / sourceHeight) * settings.scale
@@ -86,6 +89,7 @@ export function processImage(
   }
 
   for (let index = 0; index < pixels.length; index++) {
+    if (settings.invert) pixels[index] = pixels[index] ? 0 : 1
     const color = pixels[index] ? 0 : 255
     const offset = index * 4
     data[offset] = color

@@ -19,7 +19,6 @@ export function renderComposite(
   context.fillStyle = '#fff'
   context.fillRect(0, 0, device.width, device.height)
   if (base) context.drawImage(base, 0, 0)
-  thresholdToMonochrome(context, device.width, device.height)
 
   renderLuaEffectProgram(context, effects, device, time)
 
