@@ -15,7 +15,6 @@ const {
   originalUrl,
   hasStaticImage,
   processedUrl,
-  sections,
   isProcessing,
   frames,
   selectedFrameId,
@@ -100,9 +99,7 @@ function updateTab(value: string | number) {
           :original-url="originalUrl"
           :has-static-image="hasStaticImage"
           :processed-url="processedUrl"
-          :sections="sections"
           :busy="isProcessing"
-          :device-width="device.width"
           @upload="project.uploadStatic"
           @clear="project.clearStaticImage"
           @update:settings="project.updateImageSettings"

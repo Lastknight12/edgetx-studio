@@ -11,9 +11,7 @@ const props = defineProps<{
   originalUrl: string | null
   hasStaticImage: boolean
   processedUrl: string | null
-  sections: [string, string] | null
   busy: boolean
-  deviceWidth: number
 }>()
 const emit = defineEmits<{
   upload: [files: FileList | File[]]
@@ -217,43 +215,5 @@ function accept(files: FileList | File[] | null) {
         />
       </div>
     </div>
-
-    <div
-      class="mb-3 mt-6 flex items-center justify-between text-[9px] font-semibold tracking-[0.14em] text-zinc-500"
-    >
-      <span>IMAGE SPLIT</span>
-    </div>
-    <div class="grid grid-cols-2 gap-3">
-      <div
-        v-for="(section, index) in sections ?? [null, null]"
-        :key="index"
-        class="min-w-0 rounded-lg border border-white/[0.07] bg-black/10 p-2"
-      >
-        <div class="mb-2 flex items-center justify-between text-[9px] text-zinc-500">
-          <span>{{ index === 0 ? 'LEFT HALF' : 'RIGHT HALF' }}</span>
-          <span
-            >{{
-              index === 0 ? Math.floor(deviceWidth / 2) : deviceWidth - Math.floor(deviceWidth / 2)
-            }}
-            PX</span
-          >
-        </div>
-        <div
-          class="grid min-h-16 max-h-[320px] place-items-center overflow-hidden rounded border border-white/[0.05] bg-zinc-800"
-        >
-          <img
-            v-if="section"
-            :src="section"
-            :alt="`${index === 0 ? 'Left' : 'Right'} image section`"
-            class="max-h-[300px] max-w-full object-contain [image-rendering:pixelated]"
-            :style="{ width: `min(${Math.min(Math.floor(deviceWidth / 2) * 4, 512)}px, 100%)` }"
-          />
-          <span v-else class="text-zinc-700">—</span>
-        </div>
-      </div>
-    </div>
-    <p class="mt-3 text-[10px] leading-relaxed text-zinc-600">
-      Sections are exported as 1-bit BMP assets to keep per-file memory use low.
-    </p>
   </div>
 </template>

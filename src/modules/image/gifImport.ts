@@ -60,6 +60,9 @@ export async function importGifFrames(
   const gifContext = gifCanvas.getContext('2d', { willReadFrequently: true })
   if (!gifContext) throw new Error('Canvas 2D context is unavailable')
   gifContext.clearRect(0, 0, gifCanvas.width, gifCanvas.height)
+  const patchCanvas = document.createElement('canvas')
+  const patchContext = patchCanvas.getContext('2d')
+  if (!patchContext) throw new Error('Canvas 2D context is unavailable')
 
   let previousFrame: ParsedFrame | null = null
   let previousRestore: ImageData | null = null
@@ -88,13 +91,14 @@ export async function importGifFrames(
       frame.disposalType === 3
         ? gifContext.getImageData(0, 0, gifCanvas.width, gifCanvas.height)
         : null
+    patchCanvas.width = frame.dims.width
+    patchCanvas.height = frame.dims.height
     const patch = new Uint8ClampedArray(new ArrayBuffer(frame.patch.byteLength))
     patch.set(frame.patch)
-    gifContext.putImageData(
-      new ImageData(patch, frame.dims.width, frame.dims.height),
-      frame.dims.left,
-      frame.dims.top,
-    )
+    patchContext.putImageData(new ImageData(patch, frame.dims.width, frame.dims.height), 0, 0)
+    // GIF image blocks are often partial rectangles. Draw the patch with normal
+    // alpha compositing so transparent pixels retain the previous canvas.
+    gifContext.drawImage(patchCanvas, frame.dims.left, frame.dims.top)
     previousFrame = frame
 
     const source = document.createElement('canvas')

@@ -1,7 +1,6 @@
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { renderComposite } from '@/modules/effects/compositing'
 import { defaultDevice, deviceProfiles, getDeviceProfile } from '@/modules/devices/deviceRegistry'
-import { splitPixels } from '@/modules/image/imageProcessing'
 import { isGifFile } from '@/modules/image/gifImport'
 import type { DeviceProfile, ImageSettings } from '@/types/studio'
 import type { ExportFrame } from '@/modules/export/exportProject'
@@ -18,25 +17,6 @@ function createBlankCanvas(profile: DeviceProfile): HTMLCanvasElement {
   if (!context) throw new Error('Canvas 2D context is unavailable')
   context.fillStyle = '#fff'
   context.fillRect(0, 0, canvas.width, canvas.height)
-  return canvas
-}
-
-function canvasFromPixels(pixels: Uint8Array, width: number, height: number): HTMLCanvasElement {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const context = canvas.getContext('2d')
-  if (!context) throw new Error('Canvas 2D context is unavailable')
-  const image = context.createImageData(width, height)
-  for (let index = 0; index < pixels.length; index++) {
-    const color = pixels[index] ? 0 : 255
-    const offset = index * 4
-    image.data[offset] = color
-    image.data[offset + 1] = color
-    image.data[offset + 2] = color
-    image.data[offset + 3] = 255
-  }
-  context.putImageData(image, 0, 0)
   return canvas
 }
 
@@ -63,16 +43,6 @@ export function useStudioProject() {
   const processedUrl = computed(
     () => imageEditorProcessed.value?.canvas.toDataURL('image/png') ?? null,
   )
-  const sectionPreviews = computed<[string, string] | null>(() => {
-    const processed = imageEditorProcessed.value
-    if (!processed) return null
-    const [left, right] = splitPixels(processed.pixels, device.value)
-    const halfWidth = Math.floor(device.value.width / 2)
-    return [
-      canvasFromPixels(left, halfWidth, device.value.height).toDataURL(),
-      canvasFromPixels(right, device.value.width - halfWidth, device.value.height).toDataURL(),
-    ]
-  })
   const frameSummaries = computed(() =>
     imageProject.frames.value.map(({ id, file, url, duration }) => ({
       id,
@@ -357,7 +327,6 @@ export function useStudioProject() {
     originalUrl,
     hasStaticImage,
     processedUrl,
-    sections: sectionPreviews,
     imageError: imageProject.error,
     isProcessing: imageProject.isProcessing,
     uploadProgress: imageProject.uploadProgress,
