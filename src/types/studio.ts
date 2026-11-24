@@ -49,11 +49,4 @@ export interface EffectDefinition {
   description: string
   options: EffectOption[]
   defaults: EffectSettings
-  render: (
-    context: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    time: number,
-    settings: EffectSettings,
-  ) => void
 }

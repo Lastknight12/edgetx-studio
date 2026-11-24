@@ -17,15 +17,15 @@ export const firefliesLua: LuaEffectGenerator = {
     local y = math.floor(yBase + math.cos(time * ${speed} * 0.7 + seed) * 2)
     local pulse = math.sin(time * ${speed} * 2 + seed * 1.3)
     if pulse > -0.65 then
-      lcd.drawLine(x, y, x, y, SOLID, 0)
+      drawLine(x, y, x, y, SOLID, 0)
     end
     if pulse > 0.15 then
       local radius = ${size} + (pulse > 0.8 and 1 or 0)
-      lcd.drawLine(x - radius, y, x + radius, y, SOLID, 0)
-      lcd.drawLine(x, y - radius, x, y + radius, SOLID, 0)
+      drawLine(x - radius, y, x + radius, y, SOLID, 0)
+      drawLine(x, y - radius, x, y + radius, SOLID, 0)
       if pulse > 0.8 then
-        lcd.drawLine(x - 1, y - 1, x + 1, y + 1, SOLID, 0)
-        lcd.drawLine(x - 1, y + 1, x + 1, y - 1, SOLID, 0)
+        drawLine(x - 1, y - 1, x + 1, y + 1, SOLID, 0)
+        drawLine(x - 1, y + 1, x + 1, y - 1, SOLID, 0)
       end
     end
   end

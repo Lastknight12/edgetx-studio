@@ -19,14 +19,14 @@ export const fallingSnowLua: LuaEffectGenerator = {
     local drift = baseX + time * ${wind} * 5 + math.sin(time * 0.8 + seed) * 2.5
     local x = ((drift % ${device.width}) + ${device.width}) % ${device.width}
     if ${size} == 1 then
-      lcd.drawLine(math.floor(x), math.floor(y), math.floor(x), math.floor(y), SOLID, 0)
+      drawLine(math.floor(x), math.floor(y), math.floor(x), math.floor(y), SOLID, 0)
     else
-      lcd.drawLine(math.floor(x - ${size}), math.floor(y), math.floor(x + ${size}), math.floor(y), SOLID, 0)
-      lcd.drawLine(math.floor(x), math.floor(y - ${size}), math.floor(x), math.floor(y + ${size}), SOLID, 0)
-${size >= 3 ? `      lcd.drawLine(math.floor(x - 1), math.floor(y - 1), math.floor(x - 2), math.floor(y - 2), SOLID, 0)
-      lcd.drawLine(math.floor(x + 1), math.floor(y - 1), math.floor(x + 2), math.floor(y - 2), SOLID, 0)
-      lcd.drawLine(math.floor(x - 1), math.floor(y + 1), math.floor(x - 2), math.floor(y + 2), SOLID, 0)
-      lcd.drawLine(math.floor(x + 1), math.floor(y + 1), math.floor(x + 2), math.floor(y + 2), SOLID, 0)
+      drawLine(math.floor(x - ${size}), math.floor(y), math.floor(x + ${size}), math.floor(y), SOLID, 0)
+      drawLine(math.floor(x), math.floor(y - ${size}), math.floor(x), math.floor(y + ${size}), SOLID, 0)
+${size >= 3 ? `      drawLine(math.floor(x - 1), math.floor(y - 1), math.floor(x - 2), math.floor(y - 2), SOLID, 0)
+      drawLine(math.floor(x + 1), math.floor(y - 1), math.floor(x + 2), math.floor(y - 2), SOLID, 0)
+      drawLine(math.floor(x - 1), math.floor(y + 1), math.floor(x - 2), math.floor(y + 2), SOLID, 0)
+      drawLine(math.floor(x + 1), math.floor(y + 1), math.floor(x + 2), math.floor(y + 2), SOLID, 0)
 ` : ''}    end
   end
 end

@@ -7,10 +7,14 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    'process.env.FENGARICONF': 'undefined',
+  },
   plugins: [vue(), vueDevTools(), tailwindcss()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      os: fileURLToPath(new URL('./src/shims/browserOs.ts', import.meta.url)),
     },
   },
 })

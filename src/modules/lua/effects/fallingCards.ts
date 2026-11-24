@@ -17,7 +17,7 @@ export const fallingCardsLua: LuaEffectGenerator = {
     local px = centerX + localX * cosAngle - localY * sinAngle
     local py = centerY + localX * sinAngle + localY * cosAngle
     px, py = math.floor(px), math.floor(py)
-    lcd.drawLine(px, py, px, py, SOLID, 0)
+    drawLine(px, py, px, py, SOLID, 0)
   end
   local function drawGlyph(centerX, centerY, angle, character, offsetX, offsetY)
     local rows
@@ -76,12 +76,12 @@ export const fallingCardsLua: LuaEffectGenerator = {
           left = math.min(left, intersections[intersection])
           right = math.max(right, intersections[intersection])
         end
-        lcd.drawLine(math.floor(left), scanY, math.floor(right), scanY, SOLID, ERASE)
+        drawLine(math.floor(left), scanY, math.floor(right), scanY, SOLID, ERASE)
       end
     end
     for edge = 1, 4 do
       local nextCorner = edge % 4 + 1
-      lcd.drawLine(math.floor(xs[edge]), math.floor(ys[edge]), math.floor(xs[nextCorner]), math.floor(ys[nextCorner]), SOLID, 0)
+      drawLine(math.floor(xs[edge]), math.floor(ys[edge]), math.floor(xs[nextCorner]), math.floor(ys[nextCorner]), SOLID, 0)
     end
     drawGlyph(x, y, angle, ranks[item % 4 + 1], -4, -6)
     drawGlyph(x, y, angle, suits[item % 4 + 1], 1, 2)

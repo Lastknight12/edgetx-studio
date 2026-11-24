@@ -1,5 +1,5 @@
 import type { DeviceProfile, EffectInstance } from '@/types/studio'
-import { getEffectDefinition } from './registry'
+import { renderLuaEffectProgram } from './luaPreviewRuntime'
 
 export function renderComposite(
   base: HTMLCanvasElement | null,
@@ -19,21 +19,20 @@ export function renderComposite(
   context.fillStyle = '#fff'
   context.fillRect(0, 0, device.width, device.height)
   if (base) context.drawImage(base, 0, 0)
+  thresholdToMonochrome(context, device.width, device.height)
 
-  for (const effect of [...effects]
-    .filter((item) => item.enabled)
-    .sort((a, b) => a.order - b.order)) {
-    getEffectDefinition(effect.type).render(
-      context,
-      device.width,
-      device.height,
-      time,
-      effect.settings,
-    )
-  }
+  renderLuaEffectProgram(context, effects, device, time)
 
-  // The target LCD is 1-bit, so show the same hard black/white result in the preview.
-  const image = context.getImageData(0, 0, device.width, device.height)
+  thresholdToMonochrome(context, device.width, device.height)
+  return canvas
+}
+
+function thresholdToMonochrome(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): void {
+  const image = context.getImageData(0, 0, width, height)
   for (let index = 0; index < image.data.length; index += 4) {
     const luminance =
       image.data[index]! * 0.299 + image.data[index + 1]! * 0.587 + image.data[index + 2]! * 0.114
@@ -44,5 +43,4 @@ export function renderComposite(
     image.data[index + 3] = 255
   }
   context.putImageData(image, 0, 0)
-  return canvas
 }

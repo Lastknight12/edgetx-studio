@@ -63,7 +63,7 @@ export const fallingSakuraLua: LuaEffectGenerator = {
       if left and right and scanY >= 0 and scanY < ${device.height} then
         left = math.max(0, math.floor(left))
         right = math.min(${device.width - 1}, math.floor(right))
-        if left <= right then lcd.drawLine(left, scanY, right, scanY, SOLID, 0) end
+        if left <= right then drawLine(left, scanY, right, scanY, SOLID, 0) end
       end
     end
   end

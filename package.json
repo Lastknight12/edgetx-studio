@@ -17,6 +17,7 @@
   "dependencies": {
     "@lucide/vue": "^1.79.0",
     "@tailwindcss/vite": "^4.3.5",
+    "fengari": "^0.1.5",
     "jszip": "^3.10.2",
     "reka-ui": "^2.11.0",
     "simple-icons": "^16.38.1",
