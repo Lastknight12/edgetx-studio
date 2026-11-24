@@ -13,6 +13,32 @@ export const fallingCardsLua: LuaEffectGenerator = {
   local cycle = ${device.height} + cardHeight + 8
   local ranks = {"A", "7", "Q", "3"}
   local suits = {"S", "H", "D", "C"}
+  local function drawCardPixel(centerX, centerY, localX, localY, cosAngle, sinAngle)
+    local px = centerX + localX * cosAngle - localY * sinAngle
+    local py = centerY + localX * sinAngle + localY * cosAngle
+    px, py = math.floor(px), math.floor(py)
+    lcd.drawLine(px, py, px, py, SOLID, 0)
+  end
+  local function drawGlyph(centerX, centerY, angle, character, offsetX, offsetY)
+    local rows
+    if character == "A" then rows = {2, 5, 7, 5, 5}
+    elseif character == "7" then rows = {7, 1, 2, 2, 2}
+    elseif character == "Q" then rows = {2, 5, 5, 7, 3}
+    elseif character == "3" then rows = {6, 1, 2, 1, 6}
+    elseif character == "S" then rows = {3, 4, 2, 1, 6}
+    elseif character == "H" then rows = {5, 5, 7, 5, 5}
+    elseif character == "D" then rows = {6, 5, 5, 5, 6}
+    elseif character == "C" then rows = {3, 4, 4, 4, 3}
+    end
+    for row = 1, 5 do
+      local mask = rows[row]
+      for column = 0, 2 do
+        if math.floor(mask / (2 ^ (2 - column))) % 2 == 1 then
+          drawCardPixel(centerX, centerY, offsetX + column, offsetY + row - 1, math.cos(angle), math.sin(angle))
+        end
+      end
+    end
+  end
   for index = 1, ${count} do
     local item = index - 1
     local seed = item * 29.41
@@ -45,16 +71,25 @@ export const fallingCardsLua: LuaEffectGenerator = {
         end
       end
       if #intersections >= 2 then
-        table.sort(intersections)
-        lcd.drawLine(math.floor(intersections[1]), scanY, math.floor(intersections[#intersections]), scanY, SOLID, ERASE)
+        local left, right = intersections[1], intersections[1]
+        for intersection = 2, #intersections do
+          left = math.min(left, intersections[intersection])
+          right = math.max(right, intersections[intersection])
+        end
+        lcd.drawLine(math.floor(left), scanY, math.floor(right), scanY, SOLID, ERASE)
       end
     end
     for edge = 1, 4 do
       local nextCorner = edge % 4 + 1
       lcd.drawLine(math.floor(xs[edge]), math.floor(ys[edge]), math.floor(xs[nextCorner]), math.floor(ys[nextCorner]), SOLID, 0)
     end
-    lcd.drawText(math.floor(x - 2), math.floor(y - 4), ranks[item % 4 + 1], SMLSIZE)
-    lcd.drawText(math.floor(x - 2), math.floor(y + 1), suits[item % 4 + 1], SMLSIZE)
+    drawGlyph(x, y, angle, ranks[item % 4 + 1], -4, -6)
+    drawGlyph(x, y, angle, suits[item % 4 + 1], 1, 2)
+    drawCardPixel(x, y, 0, -1, cosAngle, sinAngle)
+    drawCardPixel(x, y, -1, 0, cosAngle, sinAngle)
+    drawCardPixel(x, y, 0, 0, cosAngle, sinAngle)
+    drawCardPixel(x, y, 1, 0, cosAngle, sinAngle)
+    drawCardPixel(x, y, 0, 1, cosAngle, sinAngle)
   end
 end
 `

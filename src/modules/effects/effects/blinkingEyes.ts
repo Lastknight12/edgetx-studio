@@ -1,4 +1,5 @@
 import type { EffectDefinition } from '@/types/studio'
+import { drawPixelSpan } from '../pixelDrawing'
 
 export const blinkingEyes: EffectDefinition = {
   id: 'blinking-eyes',
@@ -27,25 +28,35 @@ export const blinkingEyes: EffectDefinition = {
 
     for (let index = 0; index < count; index++) {
       const [xRatio, yRatio] = positions[index]!
-      const x = xRatio! * width
-      const y = yRatio! * height
+      const x = Math.round(xRatio! * width)
+      const y = Math.round(yRatio! * height)
       const phase = (time * frequency + index * 0.713) % 4
       const closed = phase < duration ? Math.sin((phase / duration) * Math.PI) : 0
-      const eyeWidth = 10
-      const eyeHeight = Math.max(0.7, 5 * (1 - closed))
-
-      context.fillStyle = '#fff'
-      context.beginPath()
-      context.ellipse(x, y, eyeWidth / 2, eyeHeight / 2, 0, 0, Math.PI * 2)
-      context.fill()
-      context.strokeStyle = '#111'
-      context.lineWidth = 0.8
-      context.stroke()
-      if (closed < 0.78) {
-        context.fillStyle = '#111'
-        context.beginPath()
-        context.arc(x, y, 1.5, 0, Math.PI * 2)
-        context.fill()
+      const eyeHeight = Math.floor(4 * (1 - closed) + 0.5)
+      context.fillStyle = '#000'
+      if (eyeHeight <= 1) {
+        drawPixelSpan(context, x - 6, y, x + 6)
+      } else {
+        for (let row = -eyeHeight; row <= eyeHeight; row++) {
+          const vertical = row / eyeHeight
+          const rowWidth = Math.floor(7 * Math.sqrt(1 - vertical * vertical))
+          drawPixelSpan(context, x - rowWidth, y + row, x + rowWidth)
+        }
+        context.fillStyle = '#fff'
+        for (let row = -(eyeHeight - 1); row <= eyeHeight - 1; row++) {
+          const vertical = row / (eyeHeight - 1)
+          const rowWidth = Math.floor(6 * Math.sqrt(1 - vertical * vertical))
+          drawPixelSpan(context, x - rowWidth, y + row, x + rowWidth)
+        }
+        context.fillStyle = '#000'
+        const pupilX = x + (index % 2 === 0 ? -1 : 1)
+        for (let row = -2; row <= 2; row++) {
+          const vertical = row / 2
+          const pupilHalfWidth = Math.floor(Math.sqrt(1 - vertical * vertical))
+          drawPixelSpan(context, pupilX - pupilHalfWidth, y + row, pupilX + pupilHalfWidth)
+        }
+        context.fillStyle = '#fff'
+        drawPixelSpan(context, pupilX - 1, y - 1, pupilX - 1)
       }
     }
   },

@@ -1,4 +1,6 @@
 import type { EffectDefinition } from '@/types/studio'
+import { drawPixelLine, drawPixelSpan } from '../pixelDrawing'
+import { drawCardGlyph, drawCardPip } from '../cardFont'
 
 const suits = ['S', 'H', 'D', 'C']
 const ranks = ['A', '7', 'Q', '3']
@@ -17,8 +19,8 @@ export const fallingCards: EffectDefinition = {
     const count = Number(settings.count ?? 4)
     const speed = Number(settings.speed ?? 0.7)
     const scale = Number(settings.size ?? 0.8)
-    const cardWidth = 15 * scale
-    const cardHeight = 21 * scale
+    const cardWidth = Math.max(7, Math.floor(15 * scale + 0.5))
+    const cardHeight = Math.max(9, Math.floor(21 * scale + 0.5))
     const cycle = height + cardHeight + 8
 
     context.fillStyle = '#000'
@@ -30,24 +32,55 @@ export const fallingCards: EffectDefinition = {
       const suit = suits[index % suits.length]!
       const rank = ranks[index % ranks.length]!
 
-      context.save()
-      context.translate(Math.round(x), Math.round(y))
-      context.rotate(rotation)
+      const halfWidth = cardWidth * 0.5
+      const halfHeight = cardHeight * 0.5
+      const cosAngle = Math.cos(rotation)
+      const sinAngle = Math.sin(rotation)
+      const corners = [
+        [-halfWidth, -halfHeight],
+        [halfWidth, -halfHeight],
+        [halfWidth, halfHeight],
+        [-halfWidth, halfHeight],
+      ].map(([px, py]) => [
+        x + px! * cosAngle - py! * sinAngle,
+        y + px! * sinAngle + py! * cosAngle,
+      ])
       context.fillStyle = '#fff'
-      context.strokeStyle = '#000'
-      context.lineWidth = 1
-      context.beginPath()
-      context.rect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight)
-      context.fill()
-      context.stroke()
+      const top = Math.min(...corners.map((point) => point[1]!))
+      const bottom = Math.max(...corners.map((point) => point[1]!))
+      for (let scanY = Math.floor(top); scanY <= Math.floor(bottom); scanY++) {
+        const intersections: number[] = []
+        for (let edge = 0; edge < 4; edge++) {
+          const next = (edge + 1) % 4
+          const x1 = corners[edge]![0]!
+          const y1 = corners[edge]![1]!
+          const x2 = corners[next]![0]!
+          const y2 = corners[next]![1]!
+          if ((y1 <= scanY && y2 > scanY) || (y2 <= scanY && y1 > scanY)) {
+            intersections.push(x1 + ((scanY - y1) * (x2 - x1)) / (y2 - y1))
+          }
+        }
+        if (intersections.length >= 2) {
+          drawPixelSpan(context, Math.min(...intersections), scanY, Math.max(...intersections))
+        }
+      }
       context.fillStyle = '#000'
-      context.font = `bold ${Math.max(4, Math.round(5 * scale))}px monospace`
-      context.textAlign = 'center'
-      context.textBaseline = 'middle'
-      context.fillText(rank, 0, -2 * scale)
-      context.font = `bold ${Math.max(5, Math.round(7 * scale))}px monospace`
-      context.fillText(suit, 0, 4 * scale)
-      context.restore()
+      for (let edge = 0; edge < 4; edge++) {
+        const next = (edge + 1) % 4
+        drawPixelLine(
+          context,
+          corners[edge]![0]!,
+          corners[edge]![1]!,
+          corners[next]![0]!,
+          corners[next]![1]!,
+        )
+      }
+
+      // Keep the rank, suit, and pip in the card's local coordinates as it rotates.
+      context.fillStyle = '#000'
+      drawCardGlyph(context, rank, x, y, rotation, -4, -6)
+      drawCardGlyph(context, suit, x, y, rotation, 1, 2)
+      drawCardPip(context, x, y, rotation)
     }
   },
 }

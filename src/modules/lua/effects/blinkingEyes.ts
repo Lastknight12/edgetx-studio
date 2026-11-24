@@ -24,17 +24,26 @@ export const blinkingEyesLua: LuaEffectGenerator = {
     const fn = functionName
     return `local function ${fn}(time)
   local positions = {${selected}}
+  local function drawOval(cx, cy, halfWidth, halfHeight, flags)
+    for row = -halfHeight, halfHeight do
+      local vertical = row / halfHeight
+      local rowWidth = math.floor(halfWidth * math.sqrt(1 - vertical * vertical))
+      lcd.drawLine(cx - rowWidth, cy + row, cx + rowWidth, cy + row, SOLID, flags)
+    end
+  end
   for index, position in ipairs(positions) do
     local x, y = position[1], position[2]
     local phase = (time * ${frequency} + (index - 1) * 0.713) % 4
     local closed = phase < ${duration} and math.sin((phase / ${duration}) * math.pi) or 0
-    local eyeHeight = math.max(1, math.floor(5 * (1 - closed) + 0.5))
-    if eyeHeight == 1 then
-      lcd.drawFilledRectangle(x - 4, y, 9, 1)
+    local eyeHeight = math.floor(4 * (1 - closed) + 0.5)
+    if eyeHeight <= 1 then
+      lcd.drawLine(x - 6, y, x + 6, y, SOLID, 0)
     else
-      lcd.drawFilledRectangle(x - 4, y - math.floor(eyeHeight / 2), 9, eyeHeight, ERASE)
-      lcd.drawRectangle(x - 5, y - 2, 10, 5)
-      lcd.drawFilledRectangle(x - 1, y - 1, 2, 3)
+      drawOval(x, y, 7, eyeHeight, 0)
+      drawOval(x, y, 6, eyeHeight - 1, ERASE)
+      local pupilX = x + (index % 2 == 1 and -1 or 1)
+      drawOval(pupilX, y, 1, 2, 0)
+      lcd.drawLine(pupilX - 1, y - 1, pupilX - 1, y - 1, SOLID, ERASE)
     end
   end
 end

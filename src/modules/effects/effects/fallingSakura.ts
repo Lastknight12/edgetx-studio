@@ -1,4 +1,5 @@
 import type { EffectDefinition } from '@/types/studio'
+import { drawPixelLine } from '../pixelDrawing'
 
 export const fallingSakura: EffectDefinition = {
   id: 'falling-sakura',
@@ -20,7 +21,6 @@ export const fallingSakura: EffectDefinition = {
     const randomness = Number(settings.randomness ?? 0.6)
     const cycle = height + 12
 
-    context.fillStyle = '#111'
     for (let index = 0; index < count; index++) {
       const seed = index * 37.17
       const variation = 0.55 + ((index % 5) / 5) * randomness
@@ -29,16 +29,27 @@ export const fallingSakura: EffectDefinition = {
       const x =
         ((((seed * 1.73 + phase * wind + sway) % (width + 8)) + width + 8) % (width + 8)) - 4
       const y = phase - 6
-      const radius = Math.max(2, Math.round(size * (0.85 + (index % 3) * 0.22)))
-      context.save()
-      context.translate(x, y)
-      context.rotate(Math.sin(time * 2 + seed) * 0.8)
-      context.beginPath()
-      context.moveTo(0, -radius)
-      context.quadraticCurveTo(radius * 1.25, -radius * 0.35, 0, radius)
-      context.quadraticCurveTo(-radius * 1.2, radius * 0.1, 0, -radius)
-      context.fill()
-      context.restore()
+      const radius = Math.max(2, Math.floor(size * (0.85 + (index % 3) * 0.22) + 0.5))
+      const angle = Math.sin(time * 2 + seed) * 0.8
+      const cosAngle = Math.cos(angle)
+      const sinAngle = Math.sin(angle)
+      context.fillStyle = '#000'
+      for (let row = -radius; row <= radius; row++) {
+        const halfWidth = radius * 0.75 * (1 - Math.abs(row) / (radius + 1))
+        const x1 = x - halfWidth * cosAngle - row * sinAngle
+        const y1 = y - halfWidth * sinAngle + row * cosAngle
+        const x2 = x + halfWidth * cosAngle - row * sinAngle
+        const y2 = y + halfWidth * sinAngle + row * cosAngle
+        drawPixelLine(context, x1, y1, x2, y2)
+      }
+      context.fillStyle = '#fff'
+      drawPixelLine(
+        context,
+        x + radius * sinAngle,
+        y - radius * cosAngle,
+        x - radius * sinAngle,
+        y + radius * cosAngle,
+      )
     }
   },
 }

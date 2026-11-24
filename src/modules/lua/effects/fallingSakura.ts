@@ -19,7 +19,6 @@ export const fallingSakuraLua: LuaEffectGenerator = {
     local sway = math.sin(time * 1.8 + seed) * 3
     local x = ((seed * 1.73 + phase * ${wind} + sway) % (${device.width} + 8) + ${device.width} + 8) % (${device.width} + 8) - 4
     local y = phase - 6
-    -- Enlarge subpixel preview petals so they remain visible on the Pocket's 1-bit LCD.
     local radius = math.max(2, math.floor(${size} * (0.85 + ((index - 1) % 3) * 0.22) + 0.5))
     local angle = math.sin(time * 2 + seed) * 0.8
     local cosAngle, sinAngle = math.cos(angle), math.sin(angle)
@@ -31,6 +30,11 @@ export const fallingSakuraLua: LuaEffectGenerator = {
       local y2 = y + halfWidth * sinAngle + row * cosAngle
       lcd.drawLine(math.floor(x1), math.floor(y1), math.floor(x2), math.floor(y2), SOLID, 0)
     end
+    local veinX1 = x + radius * sinAngle
+    local veinY1 = y - radius * cosAngle
+    local veinX2 = x - radius * sinAngle
+    local veinY2 = y + radius * cosAngle
+    lcd.drawLine(math.floor(veinX1), math.floor(veinY1), math.floor(veinX2), math.floor(veinY2), SOLID, ERASE)
   end
 end
 `
