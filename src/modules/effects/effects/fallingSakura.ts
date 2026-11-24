@@ -1,5 +1,5 @@
 import type { EffectDefinition } from '@/types/studio'
-import { drawPixelLine } from '../pixelDrawing'
+import { drawPixelSpan } from '../pixelDrawing'
 
 export const fallingSakura: EffectDefinition = {
   id: 'falling-sakura',
@@ -29,27 +29,48 @@ export const fallingSakura: EffectDefinition = {
       const x =
         ((((seed * 1.73 + phase * wind + sway) % (width + 8)) + width + 8) % (width + 8)) - 4
       const y = phase - 6
-      const radius = Math.max(2, Math.floor(size * (0.85 + (index % 3) * 0.22) + 0.5))
-      const angle = Math.sin(time * 2 + seed) * 0.8
-      const cosAngle = Math.cos(angle)
-      const sinAngle = Math.sin(angle)
+      const length = Math.max(5, Math.floor(size * 2.1 + 0.5))
+      const leafWidth = Math.max(2, Math.floor(size * 1.05 + 0.5))
+      const mirror = index % 2 === 0 ? 1 : -1
+      const rotation =
+        Math.sin(time * 1.2 + seed) * 0.55 + 0.7 * mirror
+
       context.fillStyle = '#000'
-      for (let row = -radius; row <= radius; row++) {
-        const halfWidth = radius * 0.75 * (1 - Math.abs(row) / (radius + 1))
-        const x1 = x - halfWidth * cosAngle - row * sinAngle
-        const y1 = y - halfWidth * sinAngle + row * cosAngle
-        const x2 = x + halfWidth * cosAngle - row * sinAngle
-        const y2 = y + halfWidth * sinAngle + row * cosAngle
-        drawPixelLine(context, x1, y1, x2, y2)
+      const cosAngle = Math.cos(rotation)
+      const sinAngle = Math.sin(rotation)
+      const points: [number, number][] = [
+        [-0.18 * length, 0],
+        [0.08 * length, -0.34 * leafWidth],
+        [0.42 * length, -leafWidth],
+        [0.78 * length, -0.82 * leafWidth],
+        [length, 0],
+        [0.76 * length, 0.74 * leafWidth],
+        [0.38 * length, 0.92 * leafWidth],
+        [0.06 * length, 0.28 * leafWidth],
+        [-0.18 * length, 0],
+      ]
+
+      const rotatedPoints = points.map(([localX, localY]) => {
+        const rotatedX = x + localX * cosAngle - localY * sinAngle
+        const rotatedY = y + localX * sinAngle + localY * cosAngle
+        return [Math.floor(rotatedX), Math.floor(rotatedY)] as const
+      })
+      const top = Math.min(...rotatedPoints.map((point) => point[1]))
+      const bottom = Math.max(...rotatedPoints.map((point) => point[1]))
+      context.fillStyle = '#000'
+      for (let scanY = top; scanY <= bottom; scanY++) {
+        const intersections: number[] = []
+        for (let edge = 0; edge < rotatedPoints.length - 1; edge++) {
+          const [x1, y1] = rotatedPoints[edge]!
+          const [x2, y2] = rotatedPoints[edge + 1]!
+          if ((y1 <= scanY && y2 > scanY) || (y2 <= scanY && y1 > scanY)) {
+            intersections.push(x1 + ((scanY - y1) * (x2 - x1)) / (y2 - y1))
+          }
+        }
+        if (intersections.length >= 2) {
+          drawPixelSpan(context, Math.min(...intersections), scanY, Math.max(...intersections))
+        }
       }
-      context.fillStyle = '#fff'
-      drawPixelLine(
-        context,
-        x + radius * sinAngle,
-        y - radius * cosAngle,
-        x - radius * sinAngle,
-        y + radius * cosAngle,
-      )
     }
   },
 }
