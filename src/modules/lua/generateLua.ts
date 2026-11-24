@@ -51,7 +51,17 @@ function generateLuaEffectParts(effects: EffectInstance[], device: DeviceProfile
 }
 
 function clippedLineFunction(device: DeviceProfile): string {
-  return `local function drawLine(x1, y1, x2, y2, pattern, flags)
+  return `local randomTicks = getTime()
+local randomSeed = (randomTicks % 65521 + math.floor(randomTicks / 65521) * 40503) % 65521
+
+local function random01(item, stream)
+  local value = (randomSeed + item * 40503 + stream * 23421 + 7919) % 65521
+  value = (value * value + 251 * value + 13849) % 65521
+  value = (value * value + 251 * value + 13849) % 65521
+  return value / 65521
+end
+
+local function drawLine(x1, y1, x2, y2, pattern, flags)
   local dx, dy = x2 - x1, y2 - y1
   local t0, t1 = 0, 1
   local function clip(p, q)

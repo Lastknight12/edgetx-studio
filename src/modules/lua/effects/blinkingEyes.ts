@@ -32,8 +32,12 @@ export const blinkingEyesLua: LuaEffectGenerator = {
     end
   end
   for index, position in ipairs(positions) do
-    local x, y = position[1], position[2]
-    local phase = (time * ${frequency} + (index - 1) * 0.713) % 4
+    local item = index
+    local x = math.floor(position[1] + (random01(item, 51) * 2 - 1) * ${device.width * 0.035} + 0.5)
+    local y = math.floor(position[2] + (random01(item, 52) * 2 - 1) * ${device.height * 0.035} + 0.5)
+    x = math.max(8, math.min(${device.width - 8}, x))
+    y = math.max(5, math.min(${device.height - 5}, y))
+    local phase = (time * ${frequency} * (0.75 + random01(item, 53) * 0.5) + random01(item, 54) * 4) % 4
     local closed = phase < ${duration} and math.sin((phase / ${duration}) * math.pi) or 0
     local eyeHeight = math.floor(4 * (1 - closed) + 0.5)
     if eyeHeight <= 1 then

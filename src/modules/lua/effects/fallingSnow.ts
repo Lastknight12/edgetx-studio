@@ -12,11 +12,11 @@ export const fallingSnowLua: LuaEffectGenerator = {
   local cycle = ${device.height + 6}
   for index = 1, ${count} do
     local item = index - 1
-    local seed = item * 19.73 + 7.1
-    local phase = (time * ${speed} * (4 + (item % 4) * 1.5) + seed * 11) % cycle
+    local seed = item + 1
+    local phase = (time * ${speed} * (2.5 + random01(seed, 21) * 6) + random01(seed, 22) * cycle) % cycle
     local y = phase - 3
-    local baseX = (seed * 13.17) % ${device.width}
-    local drift = baseX + time * ${wind} * 5 + math.sin(time * 0.8 + seed) * 2.5
+    local baseX = random01(seed, 23) * ${device.width}
+    local drift = baseX + time * ${wind} * (2 + random01(seed, 24) * 6) + math.sin(time * (0.35 + random01(seed, 25)) + random01(seed, 26) * 6.283) * (1 + random01(seed, 27) * 4)
     local x = ((drift % ${device.width}) + ${device.width}) % ${device.width}
     if ${size} == 1 then
       drawLine(math.floor(x), math.floor(y), math.floor(x), math.floor(y), SOLID, 0)

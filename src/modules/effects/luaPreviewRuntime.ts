@@ -61,6 +61,12 @@ function createProgram(
   lua_setfield(state, -2, to_luastring('drawLine'))
   lua_setglobal(state, to_luastring('lcd'))
 
+  lua_pushjsfunction(state, (timeState: import('fengari').LuaState): number => {
+    lua_pushnumber(timeState, Math.floor(Date.now() / 10))
+    return 1
+  })
+  lua_setglobal(state, to_luastring('getTime'))
+
   setGlobalNumber(state, 'SOLID', 0)
   setGlobalNumber(state, 'ERASE', eraseFlag)
   setGlobalNumber(state, 'FORCE', forceFlag)

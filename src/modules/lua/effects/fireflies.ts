@@ -10,12 +10,12 @@ export const firefliesLua: LuaEffectGenerator = {
     return `local function ${functionName}(time)
   for index = 1, ${count} do
     local item = index - 1
-    local seed = item * 29.17 + 3.7
-    local xBase = 3 + (seed * 17.31) % math.max(1, ${device.width} - 6)
-    local yBase = 3 + (seed * 23.73) % math.max(1, ${device.height} - 6)
-    local x = math.floor(xBase + math.sin(time * ${speed} * 0.55 + seed) * 3)
-    local y = math.floor(yBase + math.cos(time * ${speed} * 0.7 + seed) * 2)
-    local pulse = math.sin(time * ${speed} * 2 + seed * 1.3)
+    local seed = item + 1
+    local xBase = 3 + random01(seed, 31) * math.max(1, ${device.width} - 6)
+    local yBase = 3 + random01(seed, 32) * math.max(1, ${device.height} - 6)
+    local x = math.floor(xBase + math.sin(time * ${speed} * (0.25 + random01(seed, 33) * 0.6) + random01(seed, 34) * 6.283) * (1 + random01(seed, 35) * 4))
+    local y = math.floor(yBase + math.cos(time * ${speed} * (0.3 + random01(seed, 36) * 0.7) + random01(seed, 37) * 6.283) * (1 + random01(seed, 38) * 3))
+    local pulse = math.sin(time * ${speed} * (1.1 + random01(seed, 39) * 2.2) + random01(seed, 40) * 6.283)
     if pulse > -0.65 then
       drawLine(x, y, x, y, SOLID, 0)
     end

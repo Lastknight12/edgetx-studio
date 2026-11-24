@@ -41,10 +41,11 @@ export const fallingCardsLua: LuaEffectGenerator = {
   end
   for index = 1, ${count} do
     local item = index - 1
-    local seed = item * 29.41
-    local x = 5 + (seed * 1.91) % math.max(1, ${device.width} - 10)
-    local y = (time * ${speed} * (7 + (item % 3) * 3) + seed * 5) % cycle - cardHeight
-    local angle = math.sin(time * (0.8 + item * 0.13) + seed) * 0.7
+    local seed = item + 1
+    local x = 5 + random01(seed, 41) * math.max(1, ${device.width} - 10)
+    local fallRate = 5 + random01(seed, 42) * 8
+    local y = (time * ${speed} * fallRate + random01(seed, 43) * cycle) % cycle - cardHeight
+    local angle = math.sin(time * (0.35 + random01(seed, 44) * 1.2) + random01(seed, 45) * 6.283) * (0.25 + random01(seed, 46) * 0.7)
     local halfWidth, halfHeight = cardWidth * 0.5, cardHeight * 0.5
     local cosAngle, sinAngle = math.cos(angle), math.sin(angle)
     local function point(px, py)
@@ -83,8 +84,8 @@ export const fallingCardsLua: LuaEffectGenerator = {
       local nextCorner = edge % 4 + 1
       drawLine(math.floor(xs[edge]), math.floor(ys[edge]), math.floor(xs[nextCorner]), math.floor(ys[nextCorner]), SOLID, 0)
     end
-    drawGlyph(x, y, angle, ranks[item % 4 + 1], -4, -6)
-    drawGlyph(x, y, angle, suits[item % 4 + 1], 1, 2)
+    drawGlyph(x, y, angle, ranks[math.floor(random01(seed, 47) * 4) + 1], -4, -6)
+    drawGlyph(x, y, angle, suits[math.floor(random01(seed, 48) * 4) + 1], 1, 2)
     drawCardPixel(x, y, 0, -1, cosAngle, sinAngle)
     drawCardPixel(x, y, -1, 0, cosAngle, sinAngle)
     drawCardPixel(x, y, 0, 0, cosAngle, sinAngle)
