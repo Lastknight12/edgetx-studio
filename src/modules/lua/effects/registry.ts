@@ -1,11 +1,15 @@
 import { fallingCardsLua } from './fallingCards'
 import { fallingSakuraLua } from './fallingSakura'
 import { blinkingEyesLua } from './blinkingEyes'
+import { fallingSnowLua } from './fallingSnow'
+import { firefliesLua } from './fireflies'
 import type { LuaEffectGenerator } from './types'
 
 export const luaEffectRegistry: LuaEffectGenerator[] = [
   fallingSakuraLua,
   blinkingEyesLua,
+  fallingSnowLua,
+  firefliesLua,
   fallingCardsLua,
 ]
 
