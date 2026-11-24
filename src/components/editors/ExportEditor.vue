@@ -240,7 +240,7 @@ function formatBytes(bytes: number): string {
       </p>
       <UiButton class="mt-3 w-full" :disabled="isUploading" @click="detectSdCardFolders">
         <FolderSearch :size="14" />{{
-          sdCardRoot ? 'Detect folders again' : 'Detect SD card folders'
+          sdCardRoot ? 'Select another SD card' : 'Select SD card'
         }}
       </UiButton>
       <label v-if="imageFolders.length" class="mt-3 block">
