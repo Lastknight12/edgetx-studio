@@ -53,11 +53,7 @@ export function useAnimationTimeline(frames: ShallowRef<StudioFrame[]>) {
     frames.value = frames.value.map((frame) => (frame.id === id ? { ...frame, duration } : frame))
   }
 
-  function togglePlayback() {
-    if (isPlaying.value) {
-      isPlaying.value = false
-      return
-    }
+  function startPlayback() {
     if (!frames.value.length) return
     playbackStart = performance.now()
     playbackInitialIndex = Math.max(
@@ -65,6 +61,14 @@ export function useAnimationTimeline(frames: ShallowRef<StudioFrame[]>) {
       frames.value.findIndex((frame) => frame.id === selectedFrameId.value),
     )
     isPlaying.value = true
+  }
+
+  function togglePlayback() {
+    if (isPlaying.value) {
+      isPlaying.value = false
+      return
+    }
+    startPlayback()
   }
 
   function advance(now: number) {
@@ -101,6 +105,7 @@ export function useAnimationTimeline(frames: ShallowRef<StudioFrame[]>) {
     removeAllFrames,
     reorderFrames,
     updateDuration,
+    startPlayback,
     togglePlayback,
     advance,
   }

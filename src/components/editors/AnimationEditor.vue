@@ -37,9 +37,25 @@ const emit = defineEmits<{
 const isDragging = ref(false)
 const dragIndex = ref(-1)
 const input = ref<HTMLInputElement | null>(null)
+const frameList = ref<HTMLElement | null>(null)
+const frameScrollTop = ref(0)
+const frameRowStride = 64
+const frameWindowSize = 12
 const totalDuration = computed(
   () => props.frames.reduce((sum, frame) => sum + frame.duration, 0) / props.speed,
 )
+const visibleFrameStart = computed(() =>
+  Math.max(0, Math.floor(frameScrollTop.value / frameRowStride) - 2),
+)
+const visibleFrames = computed(() =>
+  props.frames
+    .slice(visibleFrameStart.value, visibleFrameStart.value + frameWindowSize)
+    .map((frame, offset) => ({ frame, index: visibleFrameStart.value + offset })),
+)
+
+function updateFrameScroll() {
+  frameScrollTop.value = frameList.value?.scrollTop ?? 0
+}
 
 function accept(files: FileList | File[] | null) {
   if (files?.length) emit('upload', files)
@@ -79,7 +95,7 @@ function reorder(to: number) {
           <Trash2 :size="12" /> Delete all frames
         </UiButton>
         <UiButton size="small" :disabled="busy" @click="input?.click()">
-          <Plus :size="13" />{{ busy ? 'Processing…' : 'Add frames' }}
+          <Plus :size="13" />Add frames
         </UiButton>
       </div>
       <input
@@ -107,49 +123,64 @@ function reorder(to: number) {
     >
       <Film :size="15" />Drop multiple images here to add frames
     </div>
-    <div v-if="frames.length" class="mt-3 space-y-1.5">
-      <div
-        v-for="(frame, index) in frames"
-        :key="frame.id"
-        class="flex items-center gap-2 rounded-lg border px-2 py-2 transition-colors"
-        :class="
-          frame.id === selectedId
-            ? 'border-violet-300/20 bg-violet-300/[0.05]'
-            : 'border-white/[0.06] bg-white/[0.015] hover:bg-white/[0.035]'
-        "
-        draggable="true"
-        @dragstart="dragIndex = index"
-        @dragover.prevent
-        @drop.prevent="reorder(index)"
-        @click="emit('select', frame.id)"
-      >
-        <span class="w-5 shrink-0 text-center font-mono text-[9px] text-zinc-600">{{
-          String(index + 1).padStart(2, '0')
-        }}</span>
-        <img
-          :src="frame.url"
-          :alt="frame.name"
-          class="size-10 shrink-0 rounded border border-white/[0.07] bg-zinc-900 object-contain [image-rendering:pixelated]"
-        />
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-[11px] font-medium text-zinc-300">{{ frame.name }}</p>
-          <p class="mt-1 text-[9px] text-zinc-600">{{ frame.duration }} ms</p>
+    <div
+      v-if="frames.length"
+      ref="frameList"
+      class="mt-3 max-h-96 overflow-y-auto rounded-lg"
+      @scroll.passive="updateFrameScroll"
+    >
+      <div class="relative" :style="{ height: `${frames.length * frameRowStride}px` }">
+        <div
+          class="absolute inset-x-0 space-y-1.5"
+          :style="{ top: `${visibleFrameStart * frameRowStride}px` }"
+        >
+          <div
+            v-for="{ frame, index } in visibleFrames"
+            :key="frame.id"
+            class="flex h-[58px] items-center gap-2 rounded-lg border px-2 transition-colors"
+            :class="
+              frame.id === selectedId
+                ? 'border-violet-300/20 bg-violet-300/[0.05]'
+                : 'border-white/[0.06] bg-white/[0.015] hover:bg-white/[0.035]'
+            "
+            draggable="true"
+            @dragstart="dragIndex = index"
+            @dragover.prevent
+            @drop.prevent="reorder(index)"
+            @click="emit('select', frame.id)"
+          >
+            <span class="w-5 shrink-0 text-center font-mono text-[9px] text-zinc-600">{{
+              String(index + 1).padStart(2, '0')
+            }}</span>
+            <img
+              :src="frame.url"
+              :alt="frame.name"
+              class="size-10 shrink-0 rounded border border-white/[0.07] bg-zinc-900 object-contain [image-rendering:pixelated]"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-[11px] font-medium text-zinc-300">{{ frame.name }}</p>
+              <p class="mt-1 text-[9px] text-zinc-600">{{ frame.duration }} ms</p>
+            </div>
+            <UiIconButton
+              label="Move frame up"
+              :disabled="index === 0"
+              @click.stop="emit('reorder', index, index - 1)"
+              ><ArrowUp :size="12"
+            /></UiIconButton>
+            <UiIconButton
+              label="Move frame down"
+              :disabled="index === frames.length - 1"
+              @click.stop="emit('reorder', index, index + 1)"
+              ><ArrowDown :size="12"
+            /></UiIconButton>
+            <UiIconButton
+              label="Remove frame"
+              variant="danger"
+              @click.stop="emit('remove', frame.id)"
+              ><Trash2 :size="12"
+            /></UiIconButton>
+          </div>
         </div>
-        <UiIconButton
-          label="Move frame up"
-          :disabled="index === 0"
-          @click.stop="emit('reorder', index, index - 1)"
-          ><ArrowUp :size="12"
-        /></UiIconButton>
-        <UiIconButton
-          label="Move frame down"
-          :disabled="index === frames.length - 1"
-          @click.stop="emit('reorder', index, index + 1)"
-          ><ArrowDown :size="12"
-        /></UiIconButton>
-        <UiIconButton label="Remove frame" variant="danger" @click.stop="emit('remove', frame.id)"
-          ><Trash2 :size="12"
-        /></UiIconButton>
       </div>
     </div>
     <div

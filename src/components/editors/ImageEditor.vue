@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Aperture, Image as ImageIcon, LoaderCircle, Trash2, UploadCloud } from '@lucide/vue'
+import { Aperture, Image as ImageIcon, Trash2, UploadCloud } from '@lucide/vue'
 import type { ImageSettings } from '@/types/studio'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSlider from '@/components/ui/UiSlider.vue'
@@ -63,8 +63,7 @@ function accept(files: FileList | File[] | null) {
         <p class="mt-1 text-[10px] text-zinc-500">PNG, JPG, BMP or WebP</p>
       </div>
       <UiButton size="small" :disabled="!canUpload" @click.stop="input?.click()">
-        <LoaderCircle v-if="busy" class="animate-spin" :size="13" />
-        {{ busy ? 'Processing' : 'Browse' }}
+        Browse
       </UiButton>
     </div>
 

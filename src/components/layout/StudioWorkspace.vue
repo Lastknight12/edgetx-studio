@@ -14,6 +14,7 @@ const {
   device,
   devices,
   isProcessing,
+  uploadProgress,
   isExporting,
   previewImage,
   previewVersion,
@@ -88,6 +89,32 @@ const { isDraggingFiles } = useGlobalImageDrop(
         <p class="mb-0 mt-1 text-xs text-zinc-500">
           One image opens in Image; multiple images add animation frames.
         </p>
+      </div>
+    </div>
+    <div
+      v-if="uploadProgress"
+      class="fixed bottom-5 left-1/2 z-[90] w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-violet-300/20 bg-[#14151a]/95 px-4 py-3 shadow-2xl backdrop-blur"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="mb-2 flex items-center justify-between gap-3 text-xs">
+        <span class="truncate text-zinc-200">{{ uploadProgress.message }}</span>
+        <span class="shrink-0 tabular-nums text-zinc-400"
+          >{{ uploadProgress.completed }} / {{ uploadProgress.total }}</span
+        >
+      </div>
+      <div
+        class="h-1.5 overflow-hidden rounded-full bg-white/10"
+        role="progressbar"
+        :aria-valuenow="Math.round((uploadProgress.completed / uploadProgress.total) * 100)"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        :aria-label="uploadProgress.message"
+      >
+        <div
+          class="h-full rounded-full bg-violet-300 transition-[width] duration-150"
+          :style="{ width: `${(uploadProgress.completed / uploadProgress.total) * 100}%` }"
+        ></div>
       </div>
     </div>
   </div>

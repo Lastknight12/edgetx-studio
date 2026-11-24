@@ -188,9 +188,9 @@ export function useStudioProject() {
     const previousCount = imageProject.frames.value.length
     await imageProject.uploadFrames(files)
     if (imageProject.frames.value.length > previousCount) {
-      if (!timeline.selectedFrameId.value) {
-        timeline.selectFrame(imageProject.frames.value[previousCount]!.id)
-      }
+      timeline.selectFrame(imageProject.frames.value[previousCount]!.id)
+      timeline.startPlayback()
+      activeTab.value = 'animation'
       projectExport.invalidate()
     }
   }
@@ -336,6 +336,7 @@ export function useStudioProject() {
     sections: sectionPreviews,
     imageError: imageProject.error,
     isProcessing: imageProject.isProcessing,
+    uploadProgress: imageProject.uploadProgress,
     previewImage,
     previewVersion,
     frames: frameSummaries,
