@@ -229,13 +229,14 @@ function accept(files: FileList | File[] | null) {
           >
         </div>
         <div
-          class="grid h-16 place-items-center overflow-hidden rounded border border-white/[0.05] bg-zinc-800"
+          class="grid min-h-16 max-h-[320px] place-items-center overflow-hidden rounded border border-white/[0.05] bg-zinc-800"
         >
           <img
             v-if="section"
             :src="section"
             :alt="`${index === 0 ? 'Left' : 'Right'} image section`"
-            class="max-h-full max-w-full [image-rendering:pixelated]"
+            class="max-h-[300px] max-w-full object-contain [image-rendering:pixelated]"
+            :style="{ width: `min(${Math.min(Math.floor(deviceWidth / 2) * 4, 512)}px, 100%)` }"
           />
           <span v-else class="text-zinc-700">—</span>
         </div>

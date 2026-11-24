@@ -67,14 +67,14 @@ watch(
     </header>
 
     <div
-      class="relative flex min-h-[300px] flex-1 flex-col items-center justify-center overflow-auto bg-[radial-gradient(rgba(255,255,255,0.045)_0.7px,transparent_0.7px)] [background-size:17px_17px] px-3 py-4"
+      class="relative flex min-h-[300px] flex-1 flex-col items-center justify-center overflow-hidden bg-[radial-gradient(rgba(255,255,255,0.045)_0.7px,transparent_0.7px)] [background-size:17px_17px] px-3 py-4"
     >
       <canvas
         ref="screen"
-        class="block max-w-none shrink-0 bg-white [image-rendering:pixelated] [image-rendering:crisp-edges]"
+        class="block max-w-full shrink-0 bg-white [image-rendering:pixelated] [image-rendering:crisp-edges]"
         :style="{
-          width: `${device.width * zoomLevel}px`,
-          height: `${device.height * zoomLevel}px`,
+          width: `min(${Math.min(device.width * zoomLevel, 512)}px, 100%)`,
+          height: 'auto',
         }"
         aria-label="Transmitter display preview"
       />
