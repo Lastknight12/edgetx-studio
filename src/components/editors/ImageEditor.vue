@@ -102,13 +102,14 @@ function accept(files: FileList | File[] | null) {
           ><Aperture :size="13" />
         </div>
         <div
-          class="grid h-24 place-items-center overflow-hidden rounded border border-white/[0.05] bg-zinc-800"
+          class="flex min-h-24 items-center justify-center rounded border border-white/[0.05] bg-zinc-800 p-2"
         >
           <img
             v-if="processedUrl"
             :src="processedUrl"
             alt="Processed monochrome image"
-            class="max-h-full max-w-full object-contain [image-rendering:pixelated]"
+            class="block object-contain [image-rendering:pixelated]"
+            style="max-width: min(100%, 320px); max-height: 240px; width: auto; height: auto"
           />
           <span v-else class="text-[9px] tracking-wider text-zinc-700">NO OUTPUT</span>
         </div>
