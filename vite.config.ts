@@ -11,6 +11,36 @@ export default defineConfig({
     'process.env.FENGARICONF': 'undefined',
   },
   plugins: [vue(), vueDevTools(), tailwindcss()],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'fengari',
+              test: /node_modules[\\/]fengari[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'image-import',
+              test: /node_modules[\\/]gifuct-js[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'export',
+              test: /node_modules[\\/]jszip[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'vendor',
+              test: /node_modules[\\/]/,
+              minSize: 20000,
+            },
+          ],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
