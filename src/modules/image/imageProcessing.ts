@@ -1,4 +1,18 @@
 import type { DeviceProfile, ImageSettings } from '@/types/studio'
+import {
+  adjustBrightnessAndContrast,
+  bitmapPixelToColor,
+  calculateContrastFactor,
+  calculateCoverScale,
+  calculateCropOffset,
+  calculateDiffusedError,
+  calculateHalfWidth,
+  calculateLuminance,
+  calculatePixelIndex,
+  calculateScaledSize,
+  thresholdToBitmapPixel,
+  thresholdToMonochrome,
+} from '@/modules/math'
 
 export interface ProcessedImage {
   canvas: HTMLCanvasElement
@@ -33,11 +47,11 @@ export function processImage(
   const sourceHeight = source instanceof HTMLImageElement ? source.naturalHeight : source.height
   if (!sourceWidth || !sourceHeight) throw new Error('The selected image has no dimensions')
 
-  const scale = Math.max(device.width / sourceWidth, device.height / sourceHeight) * settings.scale
-  const width = sourceWidth * scale
-  const height = sourceHeight * scale
-  const offsetX = (device.width - width) * (0.5 + settings.cropX / 200)
-  const offsetY = (device.height - height) * (0.5 + settings.cropY / 200)
+  const coverScale = calculateCoverScale(device.width, device.height, sourceWidth, sourceHeight)
+  const width = calculateScaledSize(sourceWidth, coverScale, settings.scale)
+  const height = calculateScaledSize(sourceHeight, coverScale, settings.scale)
+  const offsetX = calculateCropOffset(device.width, width, settings.cropX)
+  const offsetY = calculateCropOffset(device.height, height, settings.cropY)
   context.fillStyle = '#fff'
   context.fillRect(0, 0, device.width, device.height)
   context.drawImage(source, offsetX, offsetY, width, height)
@@ -45,52 +59,52 @@ export function processImage(
   const image = context.getImageData(0, 0, device.width, device.height)
   const { data } = image
   const pixels = new Uint8Array(device.width * device.height)
-  const contrast = (259 * (settings.contrast + 255)) / (255 * (259 - settings.contrast))
+  const contrast = calculateContrastFactor(settings.contrast)
   const valueAt = (index: number) => {
-    const luminance = data[index]! * 0.299 + data[index + 1]! * 0.587 + data[index + 2]! * 0.114
-    return Math.max(0, Math.min(255, contrast * (luminance - 128) + 128 + settings.brightness))
+    const luminance = calculateLuminance(data[index]!, data[index + 1]!, data[index + 2]!)
+    return adjustBrightnessAndContrast(luminance, contrast, settings.brightness)
   }
 
   if (settings.dither) {
     const working = new Float32Array(device.width * device.height)
     for (let y = 0; y < device.height; y++) {
       for (let x = 0; x < device.width; x++) {
-        const index = y * device.width + x
+        const index = calculatePixelIndex(x, y, device.width)
         working[index] = valueAt(index * 4)
       }
     }
 
     for (let y = 0; y < device.height; y++) {
       for (let x = 0; x < device.width; x++) {
-        const index = y * device.width + x
+        const index = calculatePixelIndex(x, y, device.width)
         const oldValue = working[index]!
-        const newValue = oldValue >= settings.threshold ? 255 : 0
-        pixels[index] = newValue === 0 ? 1 : 0
+        const newValue = thresholdToMonochrome(oldValue, settings.threshold)
+        pixels[index] = thresholdToBitmapPixel(oldValue, settings.threshold)
         const error = oldValue - newValue
-        if (x + 1 < device.width) working[index + 1] = working[index + 1]! + (error * 7) / 16
+        if (x + 1 < device.width) working[index + 1] = working[index + 1]! + calculateDiffusedError(error, 7)
         if (y + 1 < device.height) {
           if (x > 0) {
             const target = index + device.width - 1
-            working[target] = working[target]! + (error * 3) / 16
+            working[target] = working[target]! + calculateDiffusedError(error, 3)
           }
           const below = index + device.width
-          working[below] = working[below]! + (error * 5) / 16
+          working[below] = working[below]! + calculateDiffusedError(error, 5)
           if (x + 1 < device.width) {
             const target = index + device.width + 1
-            working[target] = working[target]! + error / 16
+            working[target] = working[target]! + calculateDiffusedError(error, 1)
           }
         }
       }
     }
   } else {
     for (let index = 0; index < pixels.length; index++) {
-      pixels[index] = valueAt(index * 4) < settings.threshold ? 1 : 0
+      pixels[index] = thresholdToBitmapPixel(valueAt(index * 4), settings.threshold)
     }
   }
 
   for (let index = 0; index < pixels.length; index++) {
     if (settings.invert) pixels[index] = pixels[index] ? 0 : 1
-    const color = pixels[index] ? 0 : 255
+    const color = bitmapPixelToColor(pixels[index]!)
     const offset = index * 4
     data[offset] = color
     data[offset + 1] = color
@@ -102,16 +116,18 @@ export function processImage(
 }
 
 export function splitPixels(pixels: Uint8Array, device: DeviceProfile): [Uint8Array, Uint8Array] {
-  const halfWidth = Math.floor(device.width / 2)
+  const halfWidth = calculateHalfWidth(device.width)
   const left = new Uint8Array(halfWidth * device.height)
   const right = new Uint8Array((device.width - halfWidth) * device.height)
 
   for (let y = 0; y < device.height; y++) {
     for (let x = 0; x < halfWidth; x++) {
-      left[y * halfWidth + x] = pixels[y * device.width + x]!
+      left[calculatePixelIndex(x, y, halfWidth)] = pixels[calculatePixelIndex(x, y, device.width)]!
     }
     for (let x = halfWidth; x < device.width; x++) {
-      right[y * (device.width - halfWidth) + x - halfWidth] = pixels[y * device.width + x]!
+      right[calculatePixelIndex(x - halfWidth, y, device.width - halfWidth)] = pixels[
+        calculatePixelIndex(x, y, device.width)
+      ]!
     }
   }
   return [left, right]
