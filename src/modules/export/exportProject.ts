@@ -1,4 +1,3 @@
-import JSZip from 'jszip'
 import type { DeviceProfile, EffectInstance } from '@/types/studio'
 import { encodeMonochromeBmp } from '@/modules/image/bmpEncoder'
 import { splitPixels } from '@/modules/image/imageProcessing'
@@ -31,6 +30,7 @@ export async function buildProjectZip(
   loop: boolean,
 ): Promise<ExportResult> {
   if (!frames.length) throw new Error('There are no frames to export')
+  const { default: JSZip } = await import('jszip')
   const zip = new JSZip()
   const assets = zip.folder('IMAGES')
   if (!assets) throw new Error('Unable to create the image export folder')

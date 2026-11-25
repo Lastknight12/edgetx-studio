@@ -1,4 +1,4 @@
-import { decompressFrame, parseGIF, type ParsedFrame } from 'gifuct-js'
+import type { ParsedFrame } from 'gifuct-js'
 import type { DeviceProfile, ImageSettings } from '@/types/studio'
 import {
   calculateCenteredOffset,
@@ -56,6 +56,7 @@ export async function importGifFrames(
   onFrame: (frame: ImportedGifFrame) => void,
   onProgress: (completed: number, total: number) => void,
 ): Promise<number> {
+  const { decompressFrame, parseGIF } = await import('gifuct-js')
   const parsed = parseGIF(await file.arrayBuffer())
   const imageFrames = parsed.frames.filter((frame) => 'image' in frame)
   if (!imageFrames.length || !parsed.lsd.width || !parsed.lsd.height) {
