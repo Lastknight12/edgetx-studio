@@ -1,4 +1,5 @@
 import type { DeviceProfile, EffectInstance } from '@/types/studio'
+import { calculateLuminance, thresholdToMonochrome } from '@/modules/math'
 import { renderLuaEffectProgram } from './luaPreviewRuntime'
 
 export function renderComposite(
@@ -22,20 +23,23 @@ export function renderComposite(
 
   renderLuaEffectProgram(context, effects, device, time)
 
-  thresholdToMonochrome(context, device.width, device.height)
+  applyMonochromeThreshold(context, device.width, device.height)
   return canvas
 }
 
-function thresholdToMonochrome(
+function applyMonochromeThreshold(
   context: CanvasRenderingContext2D,
   width: number,
   height: number,
 ): void {
   const image = context.getImageData(0, 0, width, height)
   for (let index = 0; index < image.data.length; index += 4) {
-    const luminance =
-      image.data[index]! * 0.299 + image.data[index + 1]! * 0.587 + image.data[index + 2]! * 0.114
-    const level = luminance < 128 ? 0 : 255
+    const luminance = calculateLuminance(
+      image.data[index]!,
+      image.data[index + 1]!,
+      image.data[index + 2]!,
+    )
+    const level = thresholdToMonochrome(luminance, 128)
     image.data[index] = level
     image.data[index + 1] = level
     image.data[index + 2] = level

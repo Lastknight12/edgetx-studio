@@ -1,5 +1,11 @@
 import { decompressFrame, parseGIF, type ParsedFrame } from 'gifuct-js'
 import type { DeviceProfile, ImageSettings } from '@/types/studio'
+import {
+  calculateCenteredOffset,
+  calculateScaledSize,
+  calculateThumbnailScale,
+  normalizeGifFrameDuration,
+} from '@/modules/math'
 import { processImage, type ProcessedImage } from './imageProcessing'
 
 export function isGifFile(file: File): boolean {
@@ -25,10 +31,12 @@ function createThumbnail(source: HTMLCanvasElement): Promise<string> {
   if (!context) throw new Error('Canvas 2D context is unavailable')
   context.fillStyle = '#fff'
   context.fillRect(0, 0, 40, 40)
-  const scale = Math.min(40 / source.width, 40 / source.height)
-  const width = source.width * scale
-  const height = source.height * scale
-  context.drawImage(source, (40 - width) / 2, (40 - height) / 2, width, height)
+  const scale = calculateThumbnailScale(source.width, source.height, 40)
+  const width = calculateScaledSize(source.width, scale)
+  const height = calculateScaledSize(source.height, scale)
+  const offsetX = calculateCenteredOffset(40, width)
+  const offsetY = calculateCenteredOffset(40, height)
+  context.drawImage(source, offsetX, offsetY, width, height)
 
   return new Promise((resolve, reject) => {
     thumbnail.toBlob((blob) => {
@@ -110,7 +118,7 @@ export async function importGifFrames(
     const thumbnailUrl = await createThumbnail(source)
     try {
       const processed = processImage(source, device, settings)
-      onFrame({ source, thumbnailUrl, duration: Math.max(20, frame.delay || 100), processed })
+      onFrame({ source, thumbnailUrl, duration: normalizeGifFrameDuration(frame.delay), processed })
     } catch (error) {
       URL.revokeObjectURL(thumbnailUrl)
       throw error

@@ -3,6 +3,7 @@ import type { DeviceProfile, EffectInstance } from '@/types/studio'
 import { encodeMonochromeBmp } from '@/modules/image/bmpEncoder'
 import { splitPixels } from '@/modules/image/imageProcessing'
 import { canvasToMonochromePixels, generateLua } from '@/modules/lua/generateLua'
+import { calculateHalfWidth } from '@/modules/math'
 
 export interface ExportFrame {
   canvas: HTMLCanvasElement
@@ -33,7 +34,7 @@ export async function buildProjectZip(
   const zip = new JSZip()
   const assets = zip.folder('IMAGES')
   if (!assets) throw new Error('Unable to create the image export folder')
-  const halfWidth = Math.floor(device.width / 2)
+  const halfWidth = calculateHalfWidth(device.width)
   const files: { name: string; blob: Blob }[] = []
 
   for (let index = 0; index < frames.length; index++) {
